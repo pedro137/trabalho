@@ -45,6 +45,7 @@
             dataGridView1.Name = "dataGridView1";
             dataGridView1.Size = new Size(240, 150);
             dataGridView1.TabIndex = 0;
+            dataGridView1.CellContentClick += dataGridView1_CellContentClick_1;
             dataGridView1.CellFormatting += dataGridView1_CellFormatting;
             // 
             // txtNome

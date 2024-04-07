@@ -1,18 +1,26 @@
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace agua
 {
     public partial class Form1 : Form
     {
+
+        private List<Contato> listaDeContatos;
+
         public Form1()
         {
             InitializeComponent();
             InitializeDataGridView();
             InitializeDataGridView2();
+
+            listaDeContatos = CarregarContatos();
         }
 
         private void InitializeDataGridView2()
@@ -88,144 +96,45 @@ namespace agua
 
         private void SalvarDados(string nome)
         {
-            string nomeArquivoNomes = "..\\..\\..\\nomes.txt";
-            string nomeArquivoCelulares = "..\\..\\..\\celulares.txt";
-            string nomeArquivoEmail = "..\\..\\..\\emails.txt";
-            string nomeArquivoTelefones = "..\\..\\..\\telefones.txt";
-
-            int novoId = ObterNovoId(nomeArquivoNomes);
-
-            // Verifica se o nome já existe no arquivo de nomes
-            if (File.Exists(nomeArquivoNomes))
-            {
-                string[] linhasNomes = File.ReadAllLines(nomeArquivoNomes);
-                if (linhasNomes.Any(line => line.Split(',')[1].TrimEnd(';') == nome))
-                {
-                    MessageBox.Show("Nome já existe no arquivo.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-            }
-
-            if (File.Exists(nomeArquivoEmail))
-            {
-                string[] linhasEmails = File.ReadAllLines(nomeArquivoEmail);
-                if (linhasEmails.Any(line => line.Split(',')[1].TrimEnd(';') == txtEmail.Text && (!txtEmail.Text.Trim().Equals(""))))
-                {
-                    MessageBox.Show("E-mail já existe no arquivo.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-            }
-
-            // Verifica se o número de telefone já existe no arquivo de celulares
-            if (File.Exists(nomeArquivoCelulares))
-            {
-                foreach (DataGridViewRow row in dataGridView1.Rows)
-                {
-                    if (!row.IsNewRow)
-                    {
-                        string telefone = Convert.ToString(row.Cells[0].Value);
-
-                        // Verifica se o número de telefone já existe no arquivo
-                        string[] linhasCelulares = File.ReadAllLines(nomeArquivoCelulares);
-                        if (linhasCelulares.Any(line => line.Split(',')[1].TrimEnd(';') == telefone))
-                        {
-                            MessageBox.Show($"O número {telefone} já está cadastrado.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            return;
-                        }
-                    }
-                }
-            }
-
-            // Verifica se o número de telefone já existe no arquivo de celulares
-            if (File.Exists(nomeArquivoTelefones))
-            {
-                foreach (DataGridViewRow row in dataGridView2.Rows)
-                {
-                    if (!row.IsNewRow)
-                    {
-                        string telefone = Convert.ToString(row.Cells[0].Value);
-
-                        // Verifica se o número de telefone já existe no arquivo
-                        string[] linhasTelefones = File.ReadAllLines(nomeArquivoTelefones);
-                        if (linhasTelefones.Any(line => line.Split(',')[1].TrimEnd(';') == telefone))
-                        {
-                            MessageBox.Show($"O número {telefone} já está cadastrado.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            return;
-                        }
-                    }
-                }
-            }
-
-            // Ordena as linhas do arquivo de nomes de acordo com o nome
-            List<string> linhasOrdenadas = new List<string>();
-            if (File.Exists(nomeArquivoNomes))
-            {
-                linhasOrdenadas = File.ReadAllLines(nomeArquivoNomes).ToList();
-                linhasOrdenadas.Add($"{novoId},{nome};");
-                linhasOrdenadas = linhasOrdenadas.OrderBy(line => line.Split(',')[1]).ToList();
-            }
-            else
-            {
-                linhasOrdenadas.Add($"1,{nome};");
-            }
-
-            using (StreamWriter writerEmails = new StreamWriter(nomeArquivoEmail, true))
-            {
-                if (File.Exists(nomeArquivoEmail))
-                {
-                    writerEmails.WriteLine($"{novoId},{txtEmail.Text};");
-                }
-                else
-                {
-                    writerEmails.WriteLine($"1,{txtEmail.Text};");
-                }
-            }
-
-            // Escreve as linhas ordenadas de volta no arquivo de nomes
-            File.WriteAllLines(nomeArquivoNomes, linhasOrdenadas);
-
             // Se ambos os dados forem válidos, salva-os
-            using (StreamWriter writerCelulares = new StreamWriter(nomeArquivoCelulares, true))
+            List<string> listCelular = new List<string>();
+            foreach (DataGridViewRow row in dataGridView1.Rows)
             {
-                foreach (DataGridViewRow row in dataGridView1.Rows)
+                if (!row.IsNewRow)
                 {
-                    if (!row.IsNewRow)
-                    {
-                        string telefone = Convert.ToString(row.Cells[0].Value);
-                        writerCelulares.WriteLine($"{novoId},{telefone};");
-                    }
+                    string celular = Convert.ToString(row.Cells[0].Value);
+                    listCelular.Add(celular);
                 }
             }
 
-            // Se ambos os dados forem válidos, salva-os
-            using (StreamWriter writerTelefones = new StreamWriter(nomeArquivoTelefones, true))
+            List<string> listTelefone = new List<string>();
+            foreach (DataGridViewRow row in dataGridView2.Rows)
             {
-                foreach (DataGridViewRow row in dataGridView2.Rows)
+                if (!row.IsNewRow)
                 {
-                    if (!row.IsNewRow)
-                    {
-                        string telefone = Convert.ToString(row.Cells[0].Value);
-                        writerTelefones.WriteLine($"{novoId},{telefone};");
-                    }
+                    string telefone = Convert.ToString(row.Cells[0].Value);
+                    listTelefone.Add(telefone);
                 }
             }
+
+            string emailx = txtEmail.Text.Trim().Equals("") ? null : txtEmail.Text;
+            Contato c = new Contato(nome, emailx, listTelefone, listCelular);
+
+            // Adiciona o novo contato à lista de contatos
+            listaDeContatos.Add(c);
+
+            // Serializa a lista atualizada de contatos de volta para JSON
+            string path = "..\\..\\..\\contatos.json";
+            string json = JsonConvert.SerializeObject(listaDeContatos, Formatting.Indented);
+
+            // Salva o JSON no arquivo
+            File.WriteAllText(path, json);
 
             MessageBox.Show("Dados salvos com sucesso.", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private int ObterNovoId(string filename)
-        {
-            if (File.Exists(filename))
-            {
-                string[] lines = File.ReadAllLines(filename);
-                if (lines.Length > 0)
-                {
-                    int maxId = lines.Max(line => int.Parse(line.Split(',')[0]));
-                    return maxId + 1;
-                }
-            }
-            return 1;
-        }
+
+     
 
         private void InitializeDataGridView()
         {
@@ -314,21 +223,60 @@ namespace agua
 
         }
 
-        private bool VerificarNumeroCelular(string Celular)
+        private bool VerificarNumeroCelular()
         {
-            int index = Celular.IndexOf("(00)");
-            if (index != -1)
+            bool valido = true;
+            foreach (DataGridViewRow row in dataGridView1.Rows)
             {
-                return true;
+             
+
+                if (!row.IsNewRow)
+                {
+                    string celular = Convert.ToString(row.Cells[0].Value);
+                    if (celular.IndexOf("(00)") != -1)
+                    {
+
+                        valido = false;
+                        MessageBox.Show($"{celular} não é um número válido.");
+                        break;
+
+                    }
+                }
             }
-            return false;
+           
+            return valido;
         }
 
+        private bool VerificarNumeroTelefone()
+        {
+
+            bool valido = true;
+            foreach (DataGridViewRow row in dataGridView2.Rows)
+            {
+
+
+                if (!row.IsNewRow)
+                {
+                    string telefone = Convert.ToString(row.Cells[0].Value);
+                    if (telefone.IndexOf("(00)") != -1)
+                    {
+
+                        valido = false;
+                        MessageBox.Show($"{telefone} não é um número válido.");
+                        break;
+                    }
+                }
+            }
+
+            return valido;
+        }
         private bool VerificarEmail(string Celular)
         {
             int index = Celular.IndexOf(".com");
             int index2 = Celular.IndexOf("@");
-            if (index != -1&&index2!=-1)
+            int index3 = Celular.IndexOf(" ");
+            int index4 = Celular.IndexOf(" ");
+            if (index != -1 && index2 != -1 && index3 == -1 && index4 == -1)
             {
                 return true;
             }
@@ -339,19 +287,40 @@ namespace agua
         {
             string novoNome = txtNome.Text.Trim();
             string novoEmail = txtEmail.Text.Trim();
+            bool nomeValido = true;
 
-            if (dataGridView1.Rows.Count <= 1 && dataGridView2.Rows.Count <= 1)
+            int quantCelulares = dataGridView1.RowCount - 1;
+            int quantTelefones = dataGridView2.RowCount - 1;
+
+            if( quantTelefones <1 &&quantCelulares<1)
             {
-
-                MessageBox.Show("Coloque um número de celular ou de telefone", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Digite pelo menos 1 celular ou 1 telefone", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
-
             }
-           
 
-            if (!(novoEmail.Equals(""))&& !VerificarEmail(novoEmail))
+
+            if (!VerificarNumeroCelular())
             {
-                MessageBox.Show("Endereço de e-mail invalido", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+               
+                return;
+            }
+            if (!VerificarNumeroTelefone())
+            {
+              
+                return;
+            }
+
+
+
+            if (NomeJaExiste(listaDeContatos, novoNome))
+            {
+                MessageBox.Show("Já existe um contato com esse nome.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(novoEmail) && EmailJaExiste(listaDeContatos, novoEmail))
+            {
+                MessageBox.Show("Já existe um contato com esse email.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -359,32 +328,58 @@ namespace agua
             {
                 if (!row.IsNewRow)
                 {
-                    foreach (DataGridViewCell cell in row.Cells)
+                    string celular = Convert.ToString(row.Cells[0].Value);
+                    if (CelularJaExiste(celular))
                     {
-                        string cellValue = Convert.ToString(cell.Value);
-
-                        if (VerificarNumeroCelular(cellValue))
-                        {
-                            MessageBox.Show("O número de Celular não pode conter dois zeros consecutivos entre parênteses.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            return;
-                        }
+                        MessageBox.Show("Já existe um contato com esse celular.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
                     }
                 }
             }
 
-            if (novoNome.Trim().Equals(""))
+            foreach (DataGridViewRow row in dataGridView2.Rows)
+            {
+                if (!row.IsNewRow)
+                {
+                    string telefone = Convert.ToString(row.Cells[0].Value);
+                    if (TelefoneJaExiste(telefone))
+                    {
+                        MessageBox.Show("Já existe um contato com esse telefone.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+                }
+            }
+
+            // Se não houver duplicatas, você pode salvar os dados
+
+
+            Regex regex = new Regex(@"^[A-Za-z0-9_@.-]+$");
+
+            char caractere = '@';
+
+            int count = novoEmail.Count(c => c == caractere);
+
+            
+
+            if ((!regex.IsMatch(novoEmail) || count > 1 || !
+                VerificarEmail(novoEmail) ) && !txtEmail.Text.Trim().Equals(""))
+            {
+                MessageBox.Show("Digite um e-mail valido agua");
+                return;
+            }
+
+
+            if (!char.IsLetter(novoNome[0]) || novoNome.Contains(" "))
+            {
+                nomeValido = false;
+            }
+
+            if (novoNome.Trim().Equals("") || !nomeValido)
             {
                 MessageBox.Show("Digite um nome");
                 return;
             }
-
             SalvarDados(novoNome);
-        }
-
-        private void dataGridView1_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
-        {
-
-
         }
 
         private void DataGridView2_CellContentClick(object sender, DataGridViewCellEventArgs e)
@@ -404,16 +399,61 @@ namespace agua
 
             // Remove todas as linhas, exceto a primeira
 
-
             dataGridView1.Rows.Clear(); // Remove a linha após a primeira
             dataGridView2.Rows.Clear(); // Remove a linha após a primeira
             txtEmail.Text = "";
             txtNome.Text = "";
 
 
+        }
 
 
+        private bool NomeJaExiste(List<Contato> contatos, string nome)
+        {
+            
+            return contatos.Any(c => c.Nome != null && c.Nome.Equals(nome, StringComparison.OrdinalIgnoreCase));
+        }
+
+
+        private bool EmailJaExiste(List<Contato> contatos, string email)
+        {
+            return contatos.Any(c => c.Email != null && c.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private bool TelefoneJaExiste(string telefone)
+        {   
+            return listaDeContatos.Any(c => c.Telefones.Contains(telefone));
+        }
+
+        private bool CelularJaExiste(string celular)
+        {
+            return listaDeContatos.Any(c => c.Celulares.Contains(celular));
+        }
+
+
+
+        private List<Contato> CarregarContatos()
+        {
+            string path = "..\\..\\..\\contatos.json";
+            List<Contato> contatos = new List<Contato>();
+
+            // Verifica se o arquivo existe
+            if (File.Exists(path))
+            {
+                // Lê o conteúdo do arquivo
+                string json = File.ReadAllText(path);
+
+                // Desserializa o JSON para obter a lista de contatos
+                contatos = JsonConvert.DeserializeObject<List<Contato>>(json);
+            }
+
+            return contatos;
+        }
+
+        private void dataGridView1_CellContentClick_1(object sender, DataGridViewCellEventArgs e)
+        {
 
         }
     }
+
 }

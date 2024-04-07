@@ -1,21 +1,28 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
 
 public class Contato
 {
-    string nome;
-    string email;
-    List<string> telefones = new List<string>();
-    List<string> celulares = new List<string>();
 
-    
+    [JsonProperty("nome")]
+    public string Nome { get; set; }
+
+    [JsonProperty("email")]
+    public string Email { get; set; }
+
+    [JsonProperty("telefones")]
+    public List<string> Telefones { get; set; }
+
+    [JsonProperty("celulares")]
+    public List<string> Celulares { get; set; }
 
     public Contato(string nome, string email, List<string> telefones, List<string> celulares)
     {
-
-        
-        this.nome = nome;
-        this.email = email;
-        this.telefones = telefones;
-        this.celulares = celulares;
+        Nome = nome;
+        Email = email;
+        Telefones = telefones;
+        Celulares = celulares;
     }
+
 }
