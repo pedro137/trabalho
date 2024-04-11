@@ -13,12 +13,14 @@ namespace agua
     {
 
         private List<Contato> listaDeContatos;
+        private Inicio inicioAux;
 
-        public Form1()
+        public Form1(Inicio inicio)
         {
             InitializeComponent();
             InitializeDataGridView();
             InitializeDataGridView2();
+            inicioAux = inicio;
 
             listaDeContatos = CarregarContatos();
         }
@@ -94,8 +96,9 @@ namespace agua
             }
         }
 
-        private void SalvarDados(string nome)
+        private void SalvarDados()
         {
+            string nome = txtNome.Text.Trim();
             // Se ambos os dados forem válidos, salva-os
             List<string> listCelular = new List<string>();
             foreach (DataGridViewRow row in dataGridView1.Rows)
@@ -129,6 +132,8 @@ namespace agua
 
             // Salva o JSON no arquivo
             File.WriteAllText(path, json);
+
+            inicioAux.AtualizarContatos();
 
             MessageBox.Show("Dados salvos com sucesso.", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
@@ -283,6 +288,21 @@ namespace agua
             return false;
         }
 
+        private bool ValidaNome(string nome)
+        {
+            bool valido = true;
+        
+
+            if  (nome.Contains(" ") || nome.Trim().Equals(""))
+            {
+                valido = false;
+            }else if (!char.IsLetter(nome[0])){ 
+                valido = false;
+            }
+
+            return valido;
+        }
+
         private void btnSalvar_Click(object sender, EventArgs e)
         {
             string novoNome = txtNome.Text.Trim();
@@ -292,7 +312,16 @@ namespace agua
             int quantCelulares = dataGridView1.RowCount - 1;
             int quantTelefones = dataGridView2.RowCount - 1;
 
-            if( quantTelefones <1 &&quantCelulares<1)
+
+            if (!ValidaNome(novoNome))
+            {
+                MessageBox.Show("Digite um nome válido");
+                return;
+            }
+
+
+
+            if ( quantTelefones <1 &&quantCelulares<1)
             {
                 MessageBox.Show("Digite pelo menos 1 celular ou 1 telefone", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
@@ -369,17 +398,11 @@ namespace agua
             }
 
 
-            if (!char.IsLetter(novoNome[0]) || novoNome.Contains(" "))
-            {
-                nomeValido = false;
-            }
 
-            if (novoNome.Trim().Equals("") || !nomeValido)
-            {
-                MessageBox.Show("Digite um nome");
-                return;
-            }
-            SalvarDados(novoNome);
+
+           
+
+            SalvarDados();
         }
 
         private void DataGridView2_CellContentClick(object sender, DataGridViewCellEventArgs e)

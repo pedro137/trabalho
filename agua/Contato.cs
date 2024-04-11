@@ -25,4 +25,9 @@ public class Contato
         Celulares = celulares;
     }
 
+    public Contato()
+    {
+
+    }
+
 }

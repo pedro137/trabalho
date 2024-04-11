@@ -1,59 +1,97 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace agua
 {
     public partial class Inicio : Form
     {
+        private List<Contato> contatos; // Lista de contatos acessível globalmente
+
         public Inicio()
         {
             InitializeComponent();
-            AdicionarNomes1();
+            CarregarContatosDoJson(); // Método para carregar contatos do JSON
+            CarregaLista();
         }
 
-        private void AdicionarNomes1()
+        public void CarregarContatosDoJson()
         {
-            string nomeArquivoNomes = "..\\..\\..\\nomes.txt";
+            string filePath = "..\\..\\..\\contatos.json";
 
-            if (File.Exists(nomeArquivoNomes))
+            // Verifica se o arquivo existe
+            if (File.Exists(filePath))
             {
-                string[] linhas = File.ReadAllLines(nomeArquivoNomes);
+                // Lê todo o conteúdo do arquivo
+                string json = File.ReadAllText(filePath);
 
-                foreach (string linha in linhas)
-                {
-                    string[] partes = linha.Split(',');
-                    if (partes.Length >= 2)
-                    {
-                        string nome = partes[1].Trim(';');
-                        AdicionarNomeAoListBox(nome);
-                    }
-                }
+                // Desserializa o JSON em uma lista de objetos Contato
+                contatos = JsonConvert.DeserializeObject<List<Contato>>(json);
+            }
+            else
+            {
+                MessageBox.Show("O arquivo de contatos não foi encontrado!");
             }
         }
 
-        private void AdicionarNomeAoListBox(string nome)
+        public void CarregaLista()
         {
-            if (!string.IsNullOrEmpty(nome))
+            // Verifica se a lista de contatos foi carregada
+            if (contatos == null || contatos.Count == 0)
             {
-                char primeiraLetra = nome[0];
-
-                // Se a letra atual for diferente da primeira letra do nome, adiciona um separador
-                if (listBox1.Items.Count == 0 || !listBox1.Items[listBox1.Items.Count - 1].ToString().StartsWith("---") ||
-                    char.ToUpper(listBox1.Items[listBox1.Items.Count - 1].ToString()[4]) != char.ToUpper(primeiraLetra))
-                {
-                    listBox1.Items.Add($"--- {char.ToUpper(primeiraLetra)} ---");
-                }
-
-                // Adiciona o nome ao ListBox
-                listBox1.Items.Add(nome);
+                MessageBox.Show("Não há contatos para carregar!");
+                return;
             }
-        }
 
+            // Agrupa os nomes por letra maiúscula
+            var grupos = contatos
+                .Select(c => c.Nome)
+                .OrderBy(nome => nome)
+                .GroupBy(nome => char.ToUpper(nome[0]));
+
+
+
+            // Adiciona os grupos ao ListBox
+            foreach (var grupo in grupos)
+            {
+                listBox1.Items.Add($"-- {grupo.Key} --"); // Adiciona a letra maiúscula como cabeçalho
+
+                // Adiciona os nomes ordenados ao grupo
+                foreach (var nome in grupo.OrderBy(nome => nome))
+                {
+                    listBox1.Items.Add(nome);
+
+                }
+            }
+
+
+        }
 
         private void listBox1_DoubleClick(object sender, EventArgs e)
         {
-            
+            if (listBox1.SelectedItem != null)
+            {
+                // Obtém o nome selecionado na ListBox
+                string nomeSelecionado = listBox1.SelectedItem.ToString();
+
+                // Procura na lista de contatos pelo nome correspondente
+                Contato contato = contatos.Find(c => c.Nome == nomeSelecionado);
+
+                // Se o contato for encontrado, exibe seus dados em um MessageBox
+                if (contato != null)
+                {
+
+                    new MostrarContato(contato,this).Show();
+
+                }
+                else
+                {
+                    MessageBox.Show("Contato não encontrado!", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -61,19 +99,21 @@ namespace agua
             new MostrarContato().Show();
         }
 
-        private void Inicio_Load(object sender, EventArgs e)
-        {
-
-        }
-
         private void btnCadastrar_Click(object sender, EventArgs e)
         {
-            new Form1().Show();
+            new Form1(this).Show();
         }
 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
 
+        }
+
+        public void AtualizarContatos()
+        {
+            listBox1.Items.Clear();
+            CarregarContatosDoJson(); // Atualiza a lista de contatos
+            CarregaLista(); // Atualiza a ListBox com os novos contatos
         }
     }
 }

@@ -33,6 +33,8 @@
             txtNome = new TextBox();
             txtEmail = new TextBox();
             btnEditar = new Button();
+            btnSalvar = new Button();
+            btnApagar = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dataGridView2).BeginInit();
             SuspendLayout();
@@ -59,7 +61,6 @@
             txtNome.Name = "txtNome";
             txtNome.Size = new Size(100, 23);
             txtNome.TabIndex = 2;
-            txtNome.TextChanged += textBox1_TextChanged;
             // 
             // txtEmail
             // 
@@ -78,11 +79,33 @@
             btnEditar.UseVisualStyleBackColor = true;
             btnEditar.Click += btnEditar_Click;
             // 
+            // btnSalvar
+            // 
+            btnSalvar.Location = new Point(547, 244);
+            btnSalvar.Name = "btnSalvar";
+            btnSalvar.Size = new Size(75, 23);
+            btnSalvar.TabIndex = 5;
+            btnSalvar.Text = "Salvar";
+            btnSalvar.UseVisualStyleBackColor = true;
+            btnSalvar.Click += btnSalvar_Click_1;
+            // 
+            // btnApagar
+            // 
+            btnApagar.Location = new Point(693, 49);
+            btnApagar.Name = "btnApagar";
+            btnApagar.Size = new Size(75, 23);
+            btnApagar.TabIndex = 6;
+            btnApagar.Text = "Apagar";
+            btnApagar.UseVisualStyleBackColor = true;
+            btnApagar.Click += btnApagar_Click;
+            // 
             // MostrarContato
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(btnApagar);
+            Controls.Add(btnSalvar);
             Controls.Add(btnEditar);
             Controls.Add(txtEmail);
             Controls.Add(txtNome);
@@ -90,7 +113,6 @@
             Controls.Add(dataGridView1);
             Name = "MostrarContato";
             Text = "MostrarContato";
-            Load += MostrarContato_Load;
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             ((System.ComponentModel.ISupportInitialize)dataGridView2).EndInit();
             ResumeLayout(false);
@@ -104,5 +126,7 @@
         private TextBox txtNome;
         private TextBox txtEmail;
         private Button btnEditar;
+        private Button btnSalvar;
+        private Button btnApagar;
     }
 }
